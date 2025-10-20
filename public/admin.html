@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Console — Boonstra Quiz</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 960px; margin: 28px auto; padding: 0 16px; }
+    .card { padding: 18px; border: 1px solid #ddd; border-radius: 8px; }
+    input { padding: 8px; margin-right: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 8px; border: 1px solid #eee; text-align: left; }
+    .small { font-size: 0.9em; color: #555 }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Console</h1>
+    <p>Enter admin password to view users and scores.</p>
+    <div>
+      <input id="pw" type="password" placeholder="Admin password" />
+      <button id="load">Load users</button>
+      <button id="changePw">Change password</button>
+    </div>
+
+    <div id="result" style="margin-top: 18px;"></div>
+    <div style="margin-top: 12px;">
+      <a href="/public/question.html">Back to question page</a>
+    </div>
+  </div>
+
+  <script src="/public/app.js"></script>
+  <script>
+    (function () {
+      function showUsers(users) {
+        const result = document.getElementById('result');
+        if (!users.length) {
+          result.innerHTML = '<p>No users registered yet.</p>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Name</th><th>Score</th><th>Joined</th></tr></thead><tbody>';
+        users.forEach(u => {
+          html += `<tr><td>${u.name}</td><td>${u.score || 0}</td><td>${u.createdAt || ''}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        result.innerHTML = html;
+      }
+
+      document.getElementById('load').addEventListener('click', () => {
+        const pw = document.getElementById('pw').value;
+        if (!pw) return alert('Enter password');
+        if (!window.Boonstra.checkAdminPassword(pw)) return alert('Incorrect password');
+        const users = window.Boonstra.getUsersSorted();
+        showUsers(users);
+      });
+
+      document.getElementById('changePw').addEventListener('click', () => {
+        const current = prompt('Enter current admin password:');
+        if (!current) return;
+        if (!window.Boonstra.checkAdminPassword(current)) return alert('Incorrect password');
+        const next = prompt('Enter new admin password (will be stored in your browser):');
+        if (!next) return alert('Password not changed');
+        window.Boonstra.setAdminPassword(next);
+        alert('Admin password updated (stored locally in this browser).');
+      });
+    })();
+  </script>
+</body>
+</html>

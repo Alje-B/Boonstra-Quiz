@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Question — Boonstra Quiz</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 12px; margin-right: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border: 1px solid #eee; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="greeting">Hello</h1>
+    <div id="questionArea">
+      <h2>Current question</h2>
+      <div id="questionText"><em>Loading...</em></div>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <button id="adminBtn">Admin Console</button>
+      <button id="signOut">Sign out</button>
+    </div>
+  </div>
+
+  <script src="/public/app.js"></script>
+  <script>
+    (function () {
+      const raw = localStorage.getItem('boonstra-current-user');
+      if (!raw) {
+        window.location.href = '/public/index.html';
+        return;
+      }
+      const user = JSON.parse(raw);
+      document.getElementById('greeting').textContent = 'Hello, ' + user.name;
+
+      const q = window.Boonstra.getCurrentQuestion();
+      document.getElementById('questionText').textContent = q ? q.text : 'No active question yet.';
+
+      document.getElementById('adminBtn').addEventListener('click', () => {
+        window.location.href = '/public/admin.html';
+      });
+
+      document.getElementById('signOut').addEventListener('click', () => {
+        localStorage.removeItem('boonstra-current-user');
+        window.location.href = '/public/index.html';
+      });
+    })();
+  </script>
+</body>
+</html>
