@@ -36,13 +36,14 @@
         const name = document.getElementById('nameInput').value.trim();
         if (!name) return alert('Please enter a name');
         try {
-          // client-side registration / find
-          const user = window.Boonstra.registerOrGetUser(name);
+          // await the async registration call
+          const user = await window.Boonstra.registerOrGetUser(name);
+          // store the resolved user object
           localStorage.setItem('boonstra-current-user', JSON.stringify(user));
           // Redirect to question page
           window.location.href = './question.html';
         } catch (err) {
-          alert('Error: ' + err.message);
+          alert('Error: ' + (err && err.message ? err.message : String(err)));
         }
       });
     })();
