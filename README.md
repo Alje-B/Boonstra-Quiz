@@ -1,22 +1,13 @@
-````markdown
-```markdown
-# Boonstra Quiz — GitHub Pages compatible (static)
+# Boonstra Quiz
 
-This branch converts the app to a static, client-side-only site so it can be hosted on GitHub Pages. The app stores data in the browser's localStorage.
+This repository contains the Boonstra Quiz web application.
 
-What changed
-- Removed server dependency: all user registration and admin features are client-side and stored in localStorage.
-- Admin console remains password-protected (default password: `changeme`). The password is stored in localStorage for the browser that sets it.
+## Publishing to GitHub Pages
 
-How to publish on GitHub Pages
-- Option A (recommended): Push this branch and open a PR, then merge to a branch configured for GitHub Pages (e.g., `gh-pages` or `main`). You can also configure Pages to serve from the `docs/` folder.
-- Option B: Create a branch named `gh-pages` containing the `public/` folder contents at the repository root.
+This project uses GitHub Pages for serving static content. To publish the site, GitHub Pages can serve from `main/docs`. To publish, ensure the following steps are followed:
 
-Notes and limitations
-- This static version is intentionally minimal: it uses localStorage, not a server-side persistent store. Therefore, users/scores are only available in the browser where they were created.
-- If you need a server-backed implementation (shared users/scores), keep or run the Express backend from the `server.js` implementation and host it on a server.
+1. Push changes to the `main` branch.
+2. Ensure that the `docs` folder is in the root of the repository.
+3. Verify the GitHub Pages settings in the repository settings.
 
-Next steps (possible improvements)
-- Convert this static app to call a server API for shared data if you want a global scoreboard.
-- Improve admin authentication (e.g., OAuth or other server-backed auth).
-````
+This will make the quiz accessible at the GitHub Pages URL for this repository.

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Boonstra Quiz — Sign in</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    .card { padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
+    input[type=text] { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+    button { padding: 8px 12px; }
+    .muted { color: #666; font-size: 0.9em }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Welcome to the Boonstra Quiz</h1>
+    <p>Please enter your name to continue:</p>
+    <form id="nameForm">
+      <input id="nameInput" type="text" placeholder="Your name" autocomplete="name" required />
+      <div>
+        <button type="submit">Continue</button>
+      </div>
+    </form>
+
+    <hr>
+    <p class="muted">If you previously visited this site on a server-backed build, note that data is now stored in your browser (local storage) when using the GitHub Pages version. Admin console is protected by a simple password (default: "changeme").</p>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('nameForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('nameInput').value.trim();
+        if (!name) return alert('Please enter a name');
+        try {
+          // client-side registration / find
+          const user = window.Boonstra.registerOrGetUser(name);
+          localStorage.setItem('boonstra-current-user', JSON.stringify(user));
+          // Redirect to question page
+          window.location.href = './question.html';
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
