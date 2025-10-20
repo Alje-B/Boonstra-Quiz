@@ -28,17 +28,27 @@
 
   <script src="app.js"></script>
   <script>
-    (function () {
+    (async function() {
       const raw = localStorage.getItem('boonstra-current-user');
       if (!raw) {
         window.location.href = './index.html';
         return;
       }
-      const user = JSON.parse(raw);
-      document.getElementById('greeting').textContent = 'Hello, ' + user.name;
+      let user;
+      try {
+        user = JSON.parse(raw);
+      } catch (_) {
+        user = null;
+      }
+      const displayName = (user && user.name) ? user.name : 'Guest';
+      document.getElementById('greeting').textContent = 'Hello, ' + displayName;
 
-      const q = window.Boonstra.getCurrentQuestion();
-      document.getElementById('questionText').textContent = q ? q.text : 'No active question yet.';
+      try {
+        const q = await window.Boonstra.getCurrentQuestion();
+        document.getElementById('questionText').textContent = q ? (q.text || ('Question: ' + q.id)) : 'No active question yet.';
+      } catch (err) {
+        document.getElementById('questionText').textContent = 'Unable to load question.';
+      }
 
       document.getElementById('adminBtn').addEventListener('click', () => {
         window.location.href = './admin.html';
