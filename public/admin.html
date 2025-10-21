@@ -16,7 +16,7 @@
 <body>
   <div class="card">
     <h1>Admin Console</h1>
-    <p>Enter admin password to view users and scores.</p>
+    <p>Enter admin password to view users and manage question pages.</p>
     <div>
       <input id="pw" type="password" placeholder="Admin password" />
       <button id="load">Load users</button>
@@ -24,17 +24,33 @@
     </div>
 
     <div id="result" style="margin-top: 18px;"></div>
+    
+    <div id="questionPageSection" style="margin-top: 24px; display: none;">
+      <h2>Question Page Management</h2>
+      <div>
+        <label for="questionPageSelect">Current Question Page:</label>
+        <select id="questionPageSelect" style="margin-left: 8px; padding: 4px;">
+          <option value="">No page selected</option>
+        </select>
+        <button id="updateQuestionPage" style="margin-left: 8px;">Update</button>
+      </div>
+      <div id="questionPageStatus" style="margin-top: 8px; font-size: 0.9em; color: #666;"></div>
+    </div>
+    
     <div style="margin-top: 12px;">
-      <a href="/public/question.html">Back to question page</a>
+      <a href="./question.html">Back to question page</a>
     </div>
   </div>
 
-  <script src="/public/app.js"></script>
+  <script src="app.js"></script>
   <script>
     (function () {
+      let currentPassword = '';
+      let questionPages = [];
+
       function showUsers(users) {
         const result = document.getElementById('result');
-        if (!users.length) {
+        if (!users || users.length === 0) {
           result.innerHTML = '<p>No users registered yet.</p>';
           return;
         }
@@ -46,22 +62,84 @@
         result.innerHTML = html;
       }
 
-      document.getElementById('load').addEventListener('click', () => {
+      async function loadQuestionPages() {
+        try {
+          questionPages = await window.Boonstra.getAllQuestionPages();
+          const select = document.getElementById('questionPageSelect');
+          select.innerHTML = '<option value="">No page selected</option>';
+          questionPages.forEach(page => {
+            const option = document.createElement('option');
+            option.value = page.id;
+            option.textContent = `${page.order}. ${page.title}`;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Error loading question pages:', err);
+        }
+      }
+
+      async function loadCurrentQuestionPage() {
+        try {
+          const currentPage = await window.Boonstra.getCurrentQuestionPage();
+          const select = document.getElementById('questionPageSelect');
+          if (currentPage) {
+            select.value = currentPage.id;
+            document.getElementById('questionPageStatus').textContent = `Current: ${currentPage.title}`;
+          } else {
+            select.value = '';
+            document.getElementById('questionPageStatus').textContent = 'No page selected';
+          }
+        } catch (err) {
+          console.error('Error loading current question page:', err);
+        }
+      }
+
+      document.getElementById('load').addEventListener('click', async () => {
         const pw = document.getElementById('pw').value;
         if (!pw) return alert('Enter password');
-        if (!window.Boonstra.checkAdminPassword(pw)) return alert('Incorrect password');
-        const users = window.Boonstra.getUsersSorted();
-        showUsers(users);
+        try {
+          const ok = await window.Boonstra.checkAdminPassword(pw);
+          if (!ok) return alert('Incorrect password');
+          currentPassword = pw;
+          const users = await window.Boonstra.getUsersSorted();
+          showUsers(users);
+          
+          // Show question page section and load data
+          document.getElementById('questionPageSection').style.display = 'block';
+          await loadQuestionPages();
+          await loadCurrentQuestionPage();
+        } catch (err) {
+          alert('Error loading users: ' + (err && err.message ? err.message : String(err)));
+        }
       });
 
-      document.getElementById('changePw').addEventListener('click', () => {
+      document.getElementById('updateQuestionPage').addEventListener('click', async () => {
+        if (!currentPassword) return alert('Please authenticate first');
+        const pageId = document.getElementById('questionPageSelect').value;
+        try {
+          await window.Boonstra.setCurrentQuestionPage(pageId, currentPassword);
+          document.getElementById('questionPageStatus').textContent = pageId ? 
+            `Updated to: ${questionPages.find(p => p.id === pageId)?.title || pageId}` : 
+            'No page selected';
+        } catch (err) {
+          alert('Error updating question page: ' + (err && err.message ? err.message : String(err)));
+        }
+      });
+
+      document.getElementById('changePw').addEventListener('click', async () => {
         const current = prompt('Enter current admin password:');
         if (!current) return;
-        if (!window.Boonstra.checkAdminPassword(current)) return alert('Incorrect password');
-        const next = prompt('Enter new admin password (will be stored in your browser):');
-        if (!next) return alert('Password not changed');
-        window.Boonstra.setAdminPassword(next);
-        alert('Admin password updated (stored locally in this browser).');
+        try {
+          const ok = await window.Boonstra.checkAdminPassword(current);
+          if (!ok) return alert('Incorrect password');
+          const next = prompt('Enter new admin password (will be stored in the Apps Script properties or locally depending on your backend):');
+          if (!next) return alert('Password not changed');
+          // If your Apps Script supports setting the password via API you'd call it here.
+          // For the current implementation (script properties) set the password in the Apps Script UI.
+          alert('Please set the new admin password in the Apps Script project properties (or update backend).');
+        } catch (err) {
+          alert('Error changing password: ' + (err && err.message ? err.message : String(err)));
+        }
       });
     })();
   </script>
