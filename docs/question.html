@@ -2,22 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Current Question — Boonstra Quiz</title>
+  <title>Current Questions — Boonstra Quiz</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
-    .card { padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
-    button { padding: 8px 12px; margin-right: 8px; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 16px; }
+    .card { padding: 24px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 16px; }
+    button { padding: 8px 12px; margin-right: 8px; margin-bottom: 8px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 8px; border: 1px solid #eee; text-align: left; }
+    .question { margin-bottom: 20px; padding: 16px; border: 1px solid #eee; border-radius: 8px; }
+    .question h3 { margin-top: 0; color: #333; }
+    .question-options { margin: 12px 0; }
+    .question-options label { display: block; margin: 8px 0; padding: 8px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+    .question-options label:hover { background-color: #f5f5f5; }
+    .question-options input[type="radio"] { margin-right: 8px; }
+    .question-options input[type="text"] { width: 100%; padding: 8px; margin-top: 8px; box-sizing: border-box; }
+    .question-image { max-width: 100%; height: auto; margin: 12px 0; border-radius: 4px; }
+    .submit-answer { background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .submit-answer:hover { background-color: #0056b3; }
+    .submit-answer:disabled { background-color: #ccc; cursor: not-allowed; }
+    .correct-answer { background-color: #d4edda; border-color: #c3e6cb; }
+    .incorrect-answer { background-color: #f8d7da; border-color: #f5c6cb; }
+    .page-title { color: #333; margin-bottom: 20px; }
+    .loading { text-align: center; color: #666; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1 id="greeting">Hello</h1>
     <div id="questionArea">
-      <h2>Current question</h2>
-      <div id="questionText"><em>Loading...</em></div>
+      <div id="pageTitle" class="page-title"></div>
+      <div id="questionsContainer">
+        <div class="loading">Loading questions...</div>
+      </div>
     </div>
 
     <div style="margin-top: 18px;">
@@ -43,12 +60,72 @@
       const displayName = (user && user.name) ? user.name : 'Guest';
       document.getElementById('greeting').textContent = 'Hello, ' + displayName;
 
-      try {
-        const q = await window.Boonstra.getCurrentQuestion();
-        document.getElementById('questionText').textContent = q ? (q.text || ('Question: ' + q.id)) : 'No active question yet.';
-      } catch (err) {
-        document.getElementById('questionText').textContent = 'Unable to load question.';
+      let currentPageId = null;
+      let pollInterval = null;
+
+      function renderQuestionPage(page) {
+        if (!page) {
+          document.getElementById('pageTitle').textContent = 'No active question page';
+          document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
+          return;
+        }
+
+        document.getElementById('pageTitle').textContent = page.title;
+        
+        let html = '';
+        page.questions.forEach((question, index) => {
+          html += `<div class="question" data-question-id="${question.id}">`;
+          html += `<h3>Question ${index + 1}</h3>`;
+          html += `<p>${question.text}</p>`;
+          
+          if (question.type === 'multiple-choice') {
+            html += '<div class="question-options">';
+            question.options.forEach((option, optIndex) => {
+              html += `<label><input type="radio" name="q_${question.id}" value="${optIndex}"> ${option}</label>`;
+            });
+            html += '</div>';
+          } else if (question.type === 'open') {
+            html += `<div class="question-options">`;
+            html += `<input type="text" name="q_${question.id}" placeholder="Your answer">`;
+            html += `</div>`;
+          }
+          
+          html += `<button class="submit-answer" onclick="submitAnswer('${question.id}', '${user.id || user.name}')">Submit Answer</button>`;
+          html += '</div>';
+        });
+        
+        document.getElementById('questionsContainer').innerHTML = html;
       }
+
+      async function loadCurrentQuestionPage() {
+        try {
+          const page = await window.Boonstra.getCurrentQuestionPage();
+          if (page && page.id !== currentPageId) {
+            currentPageId = page.id;
+            renderQuestionPage(page);
+          } else if (!page) {
+            document.getElementById('pageTitle').textContent = 'No active question page';
+            document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
+          }
+        } catch (err) {
+          console.error('Error loading question page:', err);
+          document.getElementById('pageTitle').textContent = 'Error loading questions';
+          document.getElementById('questionsContainer').innerHTML = '<div class="loading">Unable to load questions</div>';
+        }
+      }
+
+      // Load initial question page
+      await loadCurrentQuestionPage();
+
+      // Set up polling for real-time updates
+      pollInterval = setInterval(loadCurrentQuestionPage, 3000); // Poll every 3 seconds
+
+      // Clean up polling when page is unloaded
+      window.addEventListener('beforeunload', () => {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+        }
+      });
 
       document.getElementById('adminBtn').addEventListener('click', () => {
         window.location.href = './admin.html';
@@ -59,6 +136,54 @@
         window.location.href = './index.html';
       });
     })();
+
+    // Global function for submitting answers
+    async function submitAnswer(questionId, userId) {
+      const questionElement = document.querySelector(`[data-question-id="${questionId}"]`);
+      const submitBtn = questionElement.querySelector('.submit-answer');
+      
+      // Disable the button to prevent multiple submissions
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        // Get the answer
+        let answer = null;
+        const radioInputs = questionElement.querySelectorAll('input[type="radio"]');
+        const textInput = questionElement.querySelector('input[type="text"]');
+        
+        if (radioInputs.length > 0) {
+          const selected = questionElement.querySelector('input[type="radio"]:checked');
+          answer = selected ? parseInt(selected.value) : null;
+        } else if (textInput) {
+          answer = textInput.value.trim();
+        }
+
+        if (answer === null || answer === '') {
+          alert('Please provide an answer');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Answer';
+          return;
+        }
+
+        // For now, just increment score (in a real implementation, you'd validate the answer)
+        await window.Boonstra.incrementScore({ id: userId, amount: 1 });
+        
+        // Show success feedback
+        submitBtn.textContent = 'Answer Submitted!';
+        submitBtn.style.backgroundColor = '#28a745';
+        
+        // Disable the question to prevent re-submission
+        const inputs = questionElement.querySelectorAll('input');
+        inputs.forEach(input => input.disabled = true);
+        
+      } catch (err) {
+        console.error('Error submitting answer:', err);
+        alert('Error submitting answer: ' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Answer';
+      }
+    }
   </script>
 </body>
 </html>

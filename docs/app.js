@@ -74,6 +74,16 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
     return payload.currentQuestionId ? { id: String(payload.currentQuestionId), text: null } : null;
   }
 
+  async function getCurrentQuestionPage() {
+    const payload = await apiGet({ action: 'questionpage' });
+    return payload.currentQuestionPage || null;
+  }
+
+  async function getAllQuestionPages() {
+    const payload = await apiGet({ action: 'questionpages' });
+    return payload.questionPages || [];
+  }
+
   async function incrementScore({ name, id, amount = 1 } = {}) {
     if (!name && !id) throw new Error('name or id required to increment score');
     const params = { action: 'incscore', amount: Number(amount) || 1 };
@@ -100,13 +110,21 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
     return res;
   }
 
+  async function setCurrentQuestionPage(pageId, password) {
+    const res = await apiPostAsGet({ action: 'setcurrentquestionpage', pageId: String(pageId || ''), password });
+    return res;
+  }
+
   window.Boonstra = {
     registerOrGetUser,
     getUsersSorted,
     getCurrentQuestion,
+    getCurrentQuestionPage,
+    getAllQuestionPages,
     incrementScore,
     checkAdminPassword,
     setCurrentQuestion,
+    setCurrentQuestionPage,
     API_URL
   };
 })();
