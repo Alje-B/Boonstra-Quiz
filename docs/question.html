@@ -68,6 +68,8 @@
       let pollingStarted = false; // Add this flag to prevent duplicate polling
 
       const pages = await window.Boonstra.getAllQuestionPages();
+      // store the resolved user object
+      localStorage.setItem('boonstra-question-pages', JSON.stringify(pages));
 
       function renderQuestionPage(page) {
         if (!page) {
@@ -150,11 +152,14 @@
         try {
           
           const response = await window.Boonstra.getCurrentQuestionPageId();
-          const page = pages.find(p => p.id === response.currentQuestionPageId);
+          const currentQuestionPageId = response.currentQuestionPageId;
           const activatedAt = response.activatedAt;
           
-          if (page && page.id !== currentPageId) {
+          if (currentQuestionPageId && currentQuestionPageId !== currentPageId) {
             currentPageId = page.id;
+            const raw = localStorage.getItem('boonstra-question-pages');
+            const pages = JSON.parse(raw);
+            const page = pages.find(p => p.id === response.currentQuestionPageId);
             renderQuestionPage(page);
             updatePollingStatus(false, activatedAt, page.minTimeMinutes || 3);
           } else if (!page) {
