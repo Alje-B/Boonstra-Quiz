@@ -101,7 +101,6 @@
       }
 
       function updatePollingStatus(canPoll, activatedAt, minTimeMinutes) {
-        const statusElement = document.getElementById('pollingStatus');
         
         if (!canPoll && activatedAt) {
           const activatedTime = new Date(activatedAt).getTime();
@@ -111,31 +110,21 @@
           
           if (remainingMinutes > 0) {
             const remainingSeconds = Math.ceil(remainingMinutes * 60);
-            statusElement.textContent = `Next question available in ${remainingSeconds} seconds`;
-            statusElement.className = 'polling-status waiting';
-            statusElement.style.display = 'block';
-            
+          
             // Update countdown every second
             timeUntilNextPoll = remainingSeconds;
             if (timeUpdateInterval) clearInterval(timeUpdateInterval);
             timeUpdateInterval = setInterval(() => {
               timeUntilNextPoll--;
               if (timeUntilNextPoll <= 0) {
-                statusElement.textContent = 'Checking for new questions...';
-                statusElement.className = 'polling-status ready';
+
                 clearInterval(timeUpdateInterval);
                 timeUpdateInterval = null;
               } else {
-                statusElement.textContent = `Next question available in ${timeUntilNextPoll} seconds`;
               }
             }, 1000);
-          } else {
-            statusElement.textContent = 'Checking for new questions...';
-            statusElement.className = 'polling-status ready';
-            statusElement.style.display = 'block';
-          }
+
         } else {
-          statusElement.style.display = 'none';
           if (timeUpdateInterval) {
             clearInterval(timeUpdateInterval);
             timeUpdateInterval = null;
