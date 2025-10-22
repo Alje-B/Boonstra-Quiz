@@ -122,7 +122,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
     registerOrGetUser,
     getUsersSorted,
     getCurrentQuestion,
-    getCurrentQuestionPage,
+    getCurrentQuestionPageId,
     getAllQuestionPages,
     incrementScore,
     checkAdminPassword,
