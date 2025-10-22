@@ -118,7 +118,7 @@
       await loadCurrentQuestionPage();
 
       // Set up polling for real-time updates
-      pollInterval = setInterval(loadCurrentQuestionPage, 3000); // Poll every 3 seconds
+      pollInterval = setInterval(loadCurrentQuestionPage, 5000); // Poll every 5 seconds
 
       // Clean up polling when page is unloaded
       window.addEventListener('beforeunload', () => {
