@@ -110,7 +110,8 @@
           
           if (remainingMinutes > 0) {
             const remainingSeconds = Math.ceil(remainingMinutes * 60);
-          
+
+            
             // Update countdown every second
             timeUntilNextPoll = remainingSeconds;
             if (timeUpdateInterval) clearInterval(timeUpdateInterval);
@@ -120,10 +121,9 @@
 
                 clearInterval(timeUpdateInterval);
                 timeUpdateInterval = null;
-              } else {
-              }
+              } 
             }, 1000);
-
+          } 
         } else {
           if (timeUpdateInterval) {
             clearInterval(timeUpdateInterval);
