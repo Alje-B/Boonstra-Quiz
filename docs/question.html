@@ -110,7 +110,7 @@
         if (!canPoll && activatedAt) {
           const activatedTime = new Date(activatedAt).getTime();
           const currentTime = new Date().getTime();
-          const timeDiffMinutes = (currentTime - activatedAt) / (1000 * 60);
+          const timeDiffMinutes = (currentTime - activatedTime) / (1000 * 60);
           const remainingMinutes = Math.max(0, minTimeMinutes - timeDiffMinutes);
           
           if (remainingMinutes > 0) {

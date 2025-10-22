@@ -288,7 +288,7 @@ function doGet(e) {
     } else if (action === 'question') {
       const id = getMeta('currentQuestionId') || '';
       return jsonResponse({ ok:true, currentQuestionId: String(id) }, callback);
-    } else if (action === 'questionpageId') {
+    } else if (action === 'questionpageid') {
       const pageId = getCurrentQuestionPageId();
       const activatedAt = getMeta('currentQuestionPageActivatedAt');
       return jsonResponse({ 

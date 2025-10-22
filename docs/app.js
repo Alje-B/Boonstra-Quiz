@@ -79,7 +79,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
   }
 
   async function getCurrentQuestionPageId() {
-    const payload = await apiGet({ action: 'questionpageId' });
+    const payload = await apiGet({ action: 'questionpageid' });
     return {
       currentQuestionPageId: payload.currentQuestionPageId || null,
       activatedAt: payload.activatedAt || null
