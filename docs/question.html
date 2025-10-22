@@ -156,13 +156,13 @@
           const activatedAt = response.activatedAt;
           
           if (currentQuestionPageId && currentQuestionPageId !== currentPageId) {
-            currentPageId = page.id;
             const raw = localStorage.getItem('boonstra-question-pages');
             const pages = JSON.parse(raw);
-            const page = pages.find(p => p.id === response.currentQuestionPageId);
+            const page = pages.find(p => p.id === currentQuestionPageId);
+            currentPageId = currentQuestionPageId;
             renderQuestionPage(page);
-            updatePollingStatus(false, activatedAt, page.minTimeMinutes || 3);
-          } else if (!page) {
+            updatePollingStatus(false, activatedAt, page ? page.minTimeMinutes || 3 : 3);
+          } else if (!currentQuestionPageId) {
             document.getElementById('pageTitle').textContent = 'No active question page';
             document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
             updatePollingStatus(true, null, 0);
