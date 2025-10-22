@@ -65,6 +65,7 @@
       let pollInterval = null;
       let timeUntilNextPoll = 0;
       let timeUpdateInterval = null;
+      let pollingStarted = false; // Add this flag to prevent duplicate polling
 
       function renderQuestionPage(page) {
         if (!page) {
@@ -173,19 +174,20 @@
 
       // Set up polling for real-time updates - but only start after minimum wait time
       function startPolling() {
+        if (pollingStarted) return; // Prevent duplicate polling
         if (pollInterval) {
           clearInterval(pollInterval);
         }
-        pollInterval = setInterval(loadCurrentQuestionPage, 5000); // Poll every 5 seconds
+        pollInterval = setInterval(loadCurrentQuestionPage, 5000);
+        pollingStarted = true;
       }
 
-      // Start polling immediately if no minimum wait time, otherwise wait
+      // Start polling based on the wait time calculated by loadCurrentQuestionPage
       if (timeUntilNextPoll <= 0) {
         startPolling();
       } else {
         // Wait for the countdown to finish before starting polling
         if (timeUpdateInterval) {
-          const originalInterval = timeUpdateInterval;
           timeUpdateInterval = setInterval(() => {
             timeUntilNextPoll--;
             if (timeUntilNextPoll <= 0) {
@@ -196,10 +198,6 @@
           }, 1000);
         }
       }
-
-
-      // Set up polling for real-time updates
-      pollInterval = setInterval(loadCurrentQuestionPage, 5000); // Poll every 5 seconds
 
       // Clean up polling when page is unloaded
       window.addEventListener('beforeunload', () => {
