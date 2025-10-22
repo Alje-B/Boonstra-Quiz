@@ -261,27 +261,11 @@ function readQuestionPages() {
   });
 }
 
-function getCurrentQuestionPage() {
+function getCurrentQuestionPageId() {
   const pageId = getMeta('currentQuestionPageId') || '';
-  if (!pageId) return null;
-  const pages = readQuestionPages();
-  return pages.find(p => p.id === pageId) || null;
+  return pageId;
 }
 
-function canPollForNewQuestions() {
-  const activatedAt = getMeta('currentQuestionPageActivatedAt');
-  if (!activatedAt) return true; // If no timestamp, allow polling
-  
-  const currentPage = getCurrentQuestionPage();
-  if (!currentPage) return true; // If no current page, allow polling
-  
-  const minTimeMinutes = currentPage.minTimeMinutes || 3; // Default to 3 minutes
-  const activatedTime = new Date(activatedAt).getTime();
-  const currentTime = new Date().getTime();
-  const timeDiffMinutes = (currentTime - activatedTime) / (1000 * 60);
-  
-  return timeDiffMinutes >= minTimeMinutes;
-}
 
 // JSONP helper
 function jsonResponse(obj, callback) {
@@ -298,21 +282,18 @@ function doGet(e) {
   const action = (e.parameter.action || '').toLowerCase();
   const callback = e.parameter.callback;
   try {
-    ensureSheets(); // Ensure all sheets exist
     if (action === 'users') {
       const users = readUsers();
       return jsonResponse({ ok:true, users: users }, callback);
     } else if (action === 'question') {
       const id = getMeta('currentQuestionId') || '';
       return jsonResponse({ ok:true, currentQuestionId: String(id) }, callback);
-    } else if (action === 'questionpage') {
-      const page = getCurrentQuestionPage();
-      const canPoll = canPollForNewQuestions();
+    } else if (action === 'questionpageId') {
+      const pageId = getCurrentQuestionPageId();
       const activatedAt = getMeta('currentQuestionPageActivatedAt');
       return jsonResponse({ 
         ok:true, 
-        currentQuestionPage: page, 
-        canPoll: canPoll,
+        currentQuestionPageId: pageId, 
         activatedAt: activatedAt
       }, callback);
     } else if (action === 'questionpages') {

@@ -67,6 +67,8 @@
       let timeUpdateInterval = null;
       let pollingStarted = false; // Add this flag to prevent duplicate polling
 
+      const pages = await window.Boonstra.getAllQuestionPages();
+
       function renderQuestionPage(page) {
         if (!page) {
           document.getElementById('pageTitle').textContent = 'No active question page';
@@ -106,12 +108,11 @@
         if (!canPoll && activatedAt) {
           const activatedTime = new Date(activatedAt).getTime();
           const currentTime = new Date().getTime();
-          const timeDiffMinutes = (currentTime - activatedTime) / (1000 * 60);
+          const timeDiffMinutes = (currentTime - activatedAt) / (1000 * 60);
           const remainingMinutes = Math.max(0, minTimeMinutes - timeDiffMinutes);
           
           if (remainingMinutes > 0) {
             const remainingSeconds = Math.ceil(remainingMinutes * 60);
-
             
             // Update countdown every second
             timeUntilNextPoll = remainingSeconds;
@@ -147,15 +148,15 @@
 
       async function loadCurrentQuestionPage() {
         try {
-          const response = await window.Boonstra.getCurrentQuestionPage();
-          const page = response.currentQuestionPage;
-          const canPoll = response.canPoll;
+          
+          const response = await window.Boonstra.getCurrentQuestionPageId();
+          const page = pages.find(p => p.id === response.currentQuestionPageId);
           const activatedAt = response.activatedAt;
           
           if (page && page.id !== currentPageId) {
             currentPageId = page.id;
             renderQuestionPage(page);
-            updatePollingStatus(canPoll, activatedAt, page.minTimeMinutes || 3);
+            updatePollingStatus(false, activatedAt, page.minTimeMinutes || 3);
           } else if (!page) {
             document.getElementById('pageTitle').textContent = 'No active question page';
             document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
@@ -172,32 +173,6 @@
       // Load initial question page
       await loadCurrentQuestionPage();
 
-      // Set up polling for real-time updates - but only start after minimum wait time
-      function startPolling() {
-        if (pollingStarted) return; // Prevent duplicate polling
-        if (pollInterval) {
-          clearInterval(pollInterval);
-        }
-        pollInterval = setInterval(loadCurrentQuestionPage, 5000);
-        pollingStarted = true;
-      }
-
-      // Start polling based on the wait time calculated by loadCurrentQuestionPage
-      if (timeUntilNextPoll <= 0) {
-        startPolling();
-      } else {
-        // Wait for the countdown to finish before starting polling
-        if (timeUpdateInterval) {
-          timeUpdateInterval = setInterval(() => {
-            timeUntilNextPoll--;
-            if (timeUntilNextPoll <= 0) {
-              clearInterval(timeUpdateInterval);
-              timeUpdateInterval = null;
-              startPolling(); // Start polling when countdown reaches zero
-            }
-          }, 1000);
-        }
-      }
 
       // Clean up polling when page is unloaded
       window.addEventListener('beforeunload', () => {

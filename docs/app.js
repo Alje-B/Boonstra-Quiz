@@ -74,11 +74,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
     return payload.currentQuestionId ? { id: String(payload.currentQuestionId), text: null } : null;
   }
 
-  async function getCurrentQuestionPage() {
-    const payload = await apiGet({ action: 'questionpage' });
+  async function getCurrentQuestionPageId() {
+    const payload = await apiGet({ action: 'questionpageId' });
     return {
-      currentQuestionPage: payload.currentQuestionPage || null,
-      canPoll: payload.canPoll !== false,
+      currentQuestionPageId: payload.currentQuestionPageId || null,
       activatedAt: payload.activatedAt || null
     };
   }
