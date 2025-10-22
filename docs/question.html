@@ -120,8 +120,7 @@
 
                 clearInterval(timeUpdateInterval);
                 timeUpdateInterval = null;
-              } else {
-              }
+              } 
             }, 1000);
 
         } else {
@@ -147,9 +146,7 @@
             document.getElementById('pageTitle').textContent = 'No active question page';
             document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
             updatePollingStatus(true, null, 0);
-          } else {
-
-          }
+          } 
         } catch (err) {
           console.error('Error loading question page:', err);
           document.getElementById('pageTitle').textContent = 'Error loading questions';
