@@ -8,6 +8,7 @@ const QUESTION_PAGES = [
     id: 'page1',
     title: 'General Knowledge Round',
     order: 1,
+    minTimeMinutes: 3,
     questions: [
       {
         id: 'q1_1',
@@ -45,6 +46,7 @@ const QUESTION_PAGES = [
     id: 'page2',
     title: 'Science & Nature',
     order: 2,
+    minTimeMinutes: 3,
     questions: [
       {
         id: 'q2_1',
@@ -82,6 +84,7 @@ const QUESTION_PAGES = [
     id: 'page3',
     title: 'Sports & Entertainment',
     order: 3,
+    minTimeMinutes: 3,
     questions: [
       {
         id: 'q3_1',
@@ -119,6 +122,7 @@ const QUESTION_PAGES = [
     id: 'page4',
     title: 'Geography & History',
     order: 4,
+    minTimeMinutes: 3,
     questions: [
       {
         id: 'q4_1',

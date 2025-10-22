@@ -73,12 +73,18 @@ function setMeta(key, value) {
   s.appendRow([key, value]);
 }
 
+function setCurrentQuestionPageWithTimestamp(pageId) {
+  setMeta('currentQuestionPageId', pageId);
+  setMeta('currentQuestionPageActivatedAt', new Date().toISOString());
+}
+
 function initializeQuestionPages() {
   const questionPages = [
     {
       id: 'page1',
       title: 'General Knowledge Round',
       order: 1,
+      minTimeMinutes: 3, // Minimum time before client can poll for new questions
       questions: [
         {
           id: 'q1_1',
@@ -116,6 +122,7 @@ function initializeQuestionPages() {
       id: 'page2',
       title: 'Science & Nature',
       order: 2,
+      minTimeMinutes: 3,
       questions: [
         {
           id: 'q2_1',
@@ -153,6 +160,7 @@ function initializeQuestionPages() {
       id: 'page3',
       title: 'Sports & Entertainment',
       order: 3,
+      minTimeMinutes: 3,
       questions: [
         {
           id: 'q3_1',
@@ -190,6 +198,7 @@ function initializeQuestionPages() {
       id: 'page4',
       title: 'Geography & History',
       order: 4,
+      minTimeMinutes: 3,
       questions: [
         {
           id: 'q4_1',
@@ -259,6 +268,21 @@ function getCurrentQuestionPage() {
   return pages.find(p => p.id === pageId) || null;
 }
 
+function canPollForNewQuestions() {
+  const activatedAt = getMeta('currentQuestionPageActivatedAt');
+  if (!activatedAt) return true; // If no timestamp, allow polling
+  
+  const currentPage = getCurrentQuestionPage();
+  if (!currentPage) return true; // If no current page, allow polling
+  
+  const minTimeMinutes = currentPage.minTimeMinutes || 3; // Default to 3 minutes
+  const activatedTime = new Date(activatedAt).getTime();
+  const currentTime = new Date().getTime();
+  const timeDiffMinutes = (currentTime - activatedTime) / (1000 * 60);
+  
+  return timeDiffMinutes >= minTimeMinutes;
+}
+
 // JSONP helper
 function jsonResponse(obj, callback) {
   const payload = JSON.stringify(obj);
@@ -283,7 +307,14 @@ function doGet(e) {
       return jsonResponse({ ok:true, currentQuestionId: String(id) }, callback);
     } else if (action === 'questionpage') {
       const page = getCurrentQuestionPage();
-      return jsonResponse({ ok:true, currentQuestionPage: page }, callback);
+      const canPoll = canPollForNewQuestions();
+      const activatedAt = getMeta('currentQuestionPageActivatedAt');
+      return jsonResponse({ 
+        ok:true, 
+        currentQuestionPage: page, 
+        canPoll: canPoll,
+        activatedAt: activatedAt
+      }, callback);
     } else if (action === 'questionpages') {
       const pages = readQuestionPages();
       return jsonResponse({ ok:true, questionPages: pages }, callback);
@@ -347,7 +378,7 @@ function doGet(e) {
       const pw = e.parameter.password || '';
       if (pw !== getAdminPassword()) return jsonResponse({ ok:false, error:'forbidden' }, callback);
       const pageId = e.parameter.pageId || '';
-      setMeta('currentQuestionPageId', String(pageId));
+      setCurrentQuestionPageWithTimestamp(String(pageId));
       return jsonResponse({ ok:true, message:'ok' }, callback);
     } else {
       return jsonResponse({ ok:true, message:'Apps Script endpoint' }, callback);

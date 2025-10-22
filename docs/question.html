@@ -25,6 +25,7 @@
     .incorrect-answer { background-color: #f8d7da; border-color: #f5c6cb; }
     .page-title { color: #333; margin-bottom: 20px; }
     .loading { text-align: center; color: #666; }
+
   </style>
 </head>
 <body>
@@ -62,6 +63,8 @@
 
       let currentPageId = null;
       let pollInterval = null;
+      let timeUntilNextPoll = 0;
+      let timeUpdateInterval = null;
 
       function renderQuestionPage(page) {
         if (!page) {
@@ -97,20 +100,72 @@
         document.getElementById('questionsContainer').innerHTML = html;
       }
 
+      function updatePollingStatus(canPoll, activatedAt, minTimeMinutes) {
+        const statusElement = document.getElementById('pollingStatus');
+        
+        if (!canPoll && activatedAt) {
+          const activatedTime = new Date(activatedAt).getTime();
+          const currentTime = new Date().getTime();
+          const timeDiffMinutes = (currentTime - activatedTime) / (1000 * 60);
+          const remainingMinutes = Math.max(0, minTimeMinutes - timeDiffMinutes);
+          
+          if (remainingMinutes > 0) {
+            const remainingSeconds = Math.ceil(remainingMinutes * 60);
+            statusElement.textContent = `Next question available in ${remainingSeconds} seconds`;
+            statusElement.className = 'polling-status waiting';
+            statusElement.style.display = 'block';
+            
+            // Update countdown every second
+            timeUntilNextPoll = remainingSeconds;
+            if (timeUpdateInterval) clearInterval(timeUpdateInterval);
+            timeUpdateInterval = setInterval(() => {
+              timeUntilNextPoll--;
+              if (timeUntilNextPoll <= 0) {
+                statusElement.textContent = 'Checking for new questions...';
+                statusElement.className = 'polling-status ready';
+                clearInterval(timeUpdateInterval);
+                timeUpdateInterval = null;
+              } else {
+                statusElement.textContent = `Next question available in ${timeUntilNextPoll} seconds`;
+              }
+            }, 1000);
+          } else {
+            statusElement.textContent = 'Checking for new questions...';
+            statusElement.className = 'polling-status ready';
+            statusElement.style.display = 'block';
+          }
+        } else {
+          statusElement.style.display = 'none';
+          if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+            timeUpdateInterval = null;
+          }
+        }
+      }
+
       async function loadCurrentQuestionPage() {
         try {
-          const page = await window.Boonstra.getCurrentQuestionPage();
+          const response = await window.Boonstra.getCurrentQuestionPage();
+          const page = response.currentQuestionPage;
+          const canPoll = response.canPoll;
+          const activatedAt = response.activatedAt;
+          
           if (page && page.id !== currentPageId) {
             currentPageId = page.id;
             renderQuestionPage(page);
+            updatePollingStatus(canPoll, activatedAt, page.minTimeMinutes || 3);
           } else if (!page) {
             document.getElementById('pageTitle').textContent = 'No active question page';
             document.getElementById('questionsContainer').innerHTML = '<div class="loading">No questions available</div>';
+            updatePollingStatus(true, null, 0);
+          } else {
+
           }
         } catch (err) {
           console.error('Error loading question page:', err);
           document.getElementById('pageTitle').textContent = 'Error loading questions';
           document.getElementById('questionsContainer').innerHTML = '<div class="loading">Unable to load questions</div>';
+          updatePollingStatus(true, null, 0);
         }
       }
 
@@ -124,6 +179,9 @@
       window.addEventListener('beforeunload', () => {
         if (pollInterval) {
           clearInterval(pollInterval);
+        }
+        if (timeUpdateInterval) {
+          clearInterval(timeUpdateInterval);
         }
       });
 
