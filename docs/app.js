@@ -43,17 +43,19 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxukS8vvGdJkhp7XVnkDaG4
 
   // Public API implemented via JSONP GETs
   async function apiGet(params = {}) {
+    console.log("params", JSON.stringify(params));
     const res = await jsonpRequest(params);
-    console.log(JSON.stringify(res));
+    console.log("result", JSON.stringify(res));
     if (!res || res.ok === false) throw new Error(res && res.error ? res.error : 'API error');
     return res;
   }
 
   // For writes we use GET-based handlers on the Apps Script (register/incscore/setcurrentquestion)
   async function apiPostAsGet(body = {}) {
+    console.log("params", JSON.stringify(body));
     const params = Object.assign({}, body);
     const res = await jsonpRequest(params);
-    console.log(JSON.stringify(res));
+    console.log("result", JSON.stringify(res));
     if (!res || res.ok === false) throw new Error(res && res.error ? res.error : 'API error');
     return res;
   }
